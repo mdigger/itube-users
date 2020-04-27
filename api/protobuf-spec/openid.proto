@@ -1,0 +1,95 @@
+syntax="proto3";
+package itube.users;
+option go_package = "pkg/api";
+
+import "user.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "github.com/mwitkow/go-proto-validators/validator.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.goproto_registration) = true;
+option (gogoproto.goproto_enum_prefix_all) = false;
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.goproto_unkeyed_all) = false;
+option (gogoproto.goproto_sizecache_all) = false;
+option (gogoproto.goproto_extensions_map_all) = false;
+
+// OpenID сервис обеспечивает авторизацию пользователей через внешних 
+// провайдеров авторизации по протоколу OpenID Connect.
+service OpenID {
+  // Login выдает URL для перехода на авторизацию к провайдеру.
+  // 
+  // Возвращает InvalidArgument, если указан неподдерживаемый идентификатор
+  // провайдера авторизации.
+  rpc Login (Provider) returns (LoginURL);
+  // Authorize проверяет авторизацию и возвращает информацию об 
+  // авторизованном пользователе. Если пользователь не зарегистрирован,
+  // то происходит его автоматическая регистрация.
+  // 
+  // Возвращает ошибки:
+  //  - NotFound - пользователь заблокирован
+  //  - InvalidArgument - неверный формат данных входящего запроса
+  //  - Internal - внутренние ошибки
+  rpc Authorize (AuthCode) returns (User);
+}
+
+// Provider описывает информацию для получения URL для авторизации по протоколу
+// OpenID Connect.
+message Provider {
+  // домен сайта
+  string domain = 1 [
+    (validator.field) = {string_not_empty: true}];
+  // уникальный идентификатор провайдера авторизации
+  // должен совпадать с названием, используемым при конфигурации сервиса
+  // сейчас из провайдеров поддерживается только "google"
+  string provider = 2 [
+    (validator.field) = {string_not_empty: true}];
+  // url для возврата после авторизации
+  // данный url должен быть зарегистрирован и указан в списке допустимых
+  // на сервере провайдера авторизации, иначе будет возвращаться ошибка
+  string redirect_uri = 3 [
+    (gogoproto.customname) = "RedirectURI",
+    (validator.field) = {string_not_empty: true}];
+  // дополнительные необязательные параметры, используемые при авторизации
+  // например: login_hint, hd, display
+  // https://developers.google.com/identity/protocols/oauth2/openid-connect#authenticationuriparameters
+  map<string, string> params = 4; 
+  // необязательная дополнительная информация об источнике регистрации
+  RegInfo reg_info = 10 [(gogoproto.nullable) = false, (gogoproto.embed) = true];
+}
+
+// LoginURL возвращает адрес для авторизации пользователя. domain просту 
+// дублируется тот, что был использован в запросе и ни на что не влияет.
+message LoginURL {
+  // домен
+  string domain = 1 [
+    (validator.field) = {string_not_empty: true}];
+  // URL для перехода пользователя на сервер авторизации.
+  string url = 2 [
+    (gogoproto.customname) = "URL",
+    (validator.field) = {string_not_empty: true}]; 
+}
+
+// AuthCode заполняется ответом от сервера авторизации. 
+// 
+// На данный момент в качестве провайдера поддерживается только "google".
+// state и code возвращаются в обратном редиректе с сервера провайдера после
+// авторизации в виде именованных параметров url.
+message AuthCode {
+  // домен сайта
+  string domain = 1 [
+    (validator.field) = {string_not_empty: true}];
+  // уникальный идентификатор провайдера авторизации
+  // должен совпадать с названием, используемым при конфигурации сервиса
+  string provider = 2 [
+    (validator.field) = {string_not_empty: true}];
+  // state из параметров URL ответа
+  string state = 3 [
+    (validator.field) = {string_not_empty: true}];
+  // code из параметров URL ответа
+  string code = 4 [
+    (validator.field) = {string_not_empty: true}];
+}

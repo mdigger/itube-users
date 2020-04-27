@@ -1,0 +1,55 @@
+syntax="proto3";
+package itube.users;
+option go_package = "pkg/api";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "github.com/mwitkow/go-proto-validators/validator.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.goproto_registration) = true;
+option (gogoproto.goproto_enum_prefix_all) = false;
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.goproto_unkeyed_all) = false;
+option (gogoproto.goproto_sizecache_all) = false;
+option (gogoproto.goproto_extensions_map_all) = false;
+
+
+// User описывает информацию о пользователе. 
+// 
+// При обновлении domain, verified и updated игнорируются. При авторизации
+// или запросе информации о пользователе в поле domain возвращается тоже 
+// значение, что и было в запросе.
+message User {
+  // домен (возвращает тот, который был указан в запросе)
+  string domain = 1 [
+    (validator.field) = {string_not_empty: true}];
+  // уникальный идентификатор пользователя
+  string uid = 2 [
+    (gogoproto.customname) = "UID", 
+    (validator.field) = {string_not_empty: true, 
+      uuid_ver: 4, human_error: "invalid unique identifier format"}];
+  // email-адрес пользователя
+  string email = 3 [
+    (validator.field) = {string_not_empty: true}];
+  // флаг, что email-адрес подтвержден
+  bool verified = 4;
+  // дата и время последнего обновления
+  google.protobuf.Timestamp updated = 5 [(gogoproto.stdtime)=true];
+  // расширенные свойства
+  google.protobuf.Struct properties = 10;
+}
+
+// RegInfo описывает дополнительную информацию, используемую при регистрации.
+message RegInfo {
+  // точка перехода
+  string referer = 1;
+  // маркетинговая информация (https://ru.wikipedia.org/wiki/UTM-метки)
+  // желательно имена меток давать без префикса "utm_"
+  map<string,string> utm = 2 [(gogoproto.customname) = "UTM"];
+}
+

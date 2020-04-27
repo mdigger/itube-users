@@ -1,0 +1,82 @@
+syntax="proto3";
+package itube.users;
+option go_package = "pkg/api";
+
+import "user.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "github.com/mwitkow/go-proto-validators/validator.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.goproto_registration) = true;
+option (gogoproto.goproto_enum_prefix_all) = false;
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.goproto_unkeyed_all) = false;
+option (gogoproto.goproto_sizecache_all) = false;
+option (gogoproto.goproto_extensions_map_all) = false;
+
+// Tokens отвечает за отправки и проверку токенов для подтверждения почтового
+// адреса пользователя или сбросо пароля.
+service Tokens {
+  // Generate создает запрос для проверки адреса email пользователя или
+  // сброса пароля. При вызове сервер отправляет соответствующее письмо
+  // на email адрес пользователя с токеном для верификации.
+  // Повторный вызов с теми же значениями параметров заменяет токен на новый,
+  // а действие старого отменяет.
+  //
+  // Возвращает ошибки:
+  //  - InvalidArgument - неверный формат данных входящего запроса
+  //  - Internal - внутренние ошибки
+  rpc Generate (VerifyRequest) returns (TokenInfo);
+
+  // Verify проверяет токен и возвращает зарегистрированного пользователя. 
+  // Если токен неверен, то возвращается ошибка NotFound. После проверки
+  // токен автоматически удаляется и повторное его использование невозможно.
+  // 
+  // Так же автоматически подтверждает почтовый адрес, через который был
+  // отправлен данный токен.
+  //
+  // Возвращает ошибки:
+  //  - NotFound - пользователь не зарегистрирован
+  //  - InvalidArgument - неверный формат данных входящего запроса
+  //  - Internal - внутренние ошибки
+  rpc Verify (TokenInfo) returns (User);
+}
+
+// поддерживаемые типы токенов
+enum TokenType {
+  EMAIL = 0;
+  PASSWORD = 1;
+}  
+
+// VerifyRequest используется для изменения запроса на проверку почтового адреса 
+// пользователя или для замены пароля. В данном случае domain влияет на
+// формируемую ссылку для проверки токена и на быбор шаблона письма для
+// отправки.
+message VerifyRequest {
+  // домен
+  string domain = 1 [
+    (validator.field) = {string_not_empty: true}];
+  // логин пользователя
+  string email = 2 [
+    (validator.field) = {string_not_empty: true}];
+  // тип проверки
+  TokenType type = 3;
+}
+
+// TokenInfo описывает данные для проверки почтового адреса или сброса пароля
+// по токену. Физически токен не привязан к домену и, чисто теоретически,
+// может быть подтвержден на любом сайте. Тип проверки является чисто
+// информационным и не влияет на уникальность токена.
+message TokenInfo {
+  // домен
+  string domain = 1 [
+    (validator.field) = {string_not_empty: true}];
+  // полученный токен
+  string token = 2 [
+    (validator.field) = {string_not_empty: true}];
+  // тип проверки
+  TokenType type = 3;
+}

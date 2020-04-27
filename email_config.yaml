@@ -1,0 +1,38 @@
+hdsex.org:
+  name: HDSex
+  link: https://hdsex.org/
+  logo: https://hdsex.org/static/img/blocks/generic/header/header-top/logo.svg
+  copyright: Copyright © 2020 HDSex.org. All rights reserved.
+  troubletext: If the {ACTION}-button is not working for you, just copy and paste
+    the URL below into your web browser.
+  templates:
+    EMAIL:
+      intros:
+      - We're very excited to have you on board.
+      actions:
+      - instructions: 'To get started with HDSex.org, please click here:'
+        button:
+          color: '#22BC66'
+          textcolor: ""
+          text: Confirm your account
+          link: https://hdsex.org/confirm?token=_TOKEN_PLACEHOLDER_
+      outros:
+      - Need help, or have questions? Just reply to this email, we'd love to help.
+      signature: Sincerely
+      title: Welcome to HDSex
+    PASSWORD:
+      intros:
+      - You have received this email because a password reset request for HDSex.org
+        account was received.
+      actions:
+      - instructions: 'Click the link below to reset your password:'
+        button:
+          color: '#DC4D2F'
+          textcolor: ""
+          text: Reset your password
+          link: https://hdsex.org.com/reset-password?token=_TOKEN_PLACEHOLDER_
+      outros:
+      - If you did not request a password reset, no further action is required on
+        your part.
+      signature: Thanks
+      title: Password reset
