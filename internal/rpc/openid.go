@@ -76,7 +76,7 @@ func (s *OpenID) Authorize(ctx context.Context, req *api.AuthCode) (*api.User, e
 		return apiUser(req.Domain, user) // возвращаем информацию о пользователе
 	}
 	// произошла ошибка
-	if err != nil && !errors.Is(err, db.ErrNotFound) {
+	if !errors.Is(err, db.ErrNotFound) {
 		return nil, statusError(err)
 	}
 	// пользователь не зарегистрирован - регистрируем
